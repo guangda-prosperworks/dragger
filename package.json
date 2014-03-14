@@ -1,0 +1,10 @@
+{
+  "name":"Dragger",
+  "version": "0.0.4",
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-express": "~1.0.0-beta2",
+    "grunt-contrib-watch": "~0.5.1",
+    "grunt-open": "~0.2.1"
+  }
+}
