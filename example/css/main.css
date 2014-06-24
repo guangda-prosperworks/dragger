@@ -1,53 +1,124 @@
-html,body,div {
+.compose-wrapper {
+	position: absolute;
+	width: 100%;
+	bottom: 0;
+	top: 0;
+	overflow: hidden;
 	padding: 0;
+}
+
+.window-container {
+	margin-right: 300px;
+	height: 100%;
+}
+
+.control-bar {
+	width: 300px;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	right: 0;
+	background-color: #e1e1e1;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	.-webkit-transition: right 0.2s ease-in;
+	-moz-transition: right 0.2s ease-in;
+	-ms-transition: right 0.2s ease-in;
+	-o-transition: right 0.2s ease-in;
+	transition: right 0.2s ease-in;
+	z-index: 10;
+}
+
+.toolbar-lego {
+	width: 80px;
+	height: 80px;
+	margin: 3px 0 12px 15px;
+	float: left;
+	border: 1px solid #ddd;
+	background: #eee;
+	font-size: 12px;
+	word-break: break-all;
+	background-color: #f4f4f4;
+	padding: 2px 3px;
+	cursor: move;
+	cursor: -moz-grab;
+	cursor: -webkit-grab;
+}
+
+.toolbar-lego:active {
+	cursor: -moz-grabbing;
+	cursor: -webkit-grabbing;
+}
+
+.drop-area {
+	padding-top: 20px;
+}
+
+ul.list-unstyled {
 	margin: 0;
 }
 
-.view-container {
-	/*width: 95%;*/
+ul.list-unstyled > li {
+	list-style: none;
 }
 
-.toolbar-container {
-	position: fixed;
-	right: 0;
-	top: 60px;
-	width: 100px;
-	height: 300px;
-	background: #333;
-	z-index: 100000;
-	color: #fff;
+.droppable {
+	min-height: 50px;
+	border: 1px #ccc dashed;
 }
 
-ul {
-	&.list {
-	    list-style-type: none;
-	    padding: 0;
-	    li {
-	    	height: 28px;
-	    }
-	}
-
-	&.droppable {
-		min-height: 30px;
-		li {
-			box-sizing: border-box;
-			vertical-align: top;
-			border: 1px solid #dcdbdd;
-
-			&.placeholder {
-				height: 20px;
-				border: 1px dashed #000;
-			}
-		}
-	}
+.droppable.highlight {
+	background: #7aff85;
 }
 
-#toolbar>div {
-	text-align: center;
-	border: 1px solid #dcdbdd;
+.droppable>li {
+	min-height: 50px;
+	vertical-align: top;
+	border: 1px solid transparent;
+}
+
+.droppable>li.placeholder {
+	height: 50px;
+	width: 100%;
+	float: none;
+	margin: 0;
+	border: 1px dashed #000;
+	background: #5191ff;
 }
 
 .dragging {
 	opacity: 1;
 	background: #999;
+}
+
+.lego-move {
+	width: 12px;
+	height: 12px;
+	border-radius: 12px;
+	border: 1px solid #137cff;
+	background: #F1F1F1;
+	position: absolute;
+	z-index: 1000;
+	cursor: move;
+	cursor: -moz-grab;
+	cursor: -webkit-grab;
+	margin: -6px 0 0 -6px;
+}
+
+.lego-move:active {
+	cursor: -moz-grabbing;
+	cursor: -webkit-grabbing;
+}
+
+.test-dd li {
+	list-style-type: none;
+	width: 40px;
+	height: 40px;
+	border: 1px solid #000;
+	text-align: center;
+	float: left;
+}
+
+.log {
+	margin-top: 30px;
 }

@@ -1,6 +1,7 @@
 {
   "name": "Dragger",
-  "devDependencies": {
-    "jquery": "1.10.2"
+  "dependencies": {
+    "jquery": "1.10.2",
+    "bootstrap": "3.1.1"
   }
 }

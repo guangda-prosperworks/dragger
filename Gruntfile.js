@@ -10,7 +10,7 @@ module.exports = function(grunt) {
                 options: {
                     port: 9000,
                     hostname: "0.0.0.0",
-                    bases: ['example', 'bower_components'],
+                    bases: ['example', 'bower_components', 'src'],
                     livereload: true
                 }
             }
@@ -19,7 +19,7 @@ module.exports = function(grunt) {
         // grunt-watch will monitor the projects files
         watch: {
             all: {
-                files: ['*.html', 'js/*.js', 'css/*.css'],
+                files: ['*.html', 'js/*.js', 'css/*.css', '*.js'],
                 options: {
                     livereload: true
                 }
