@@ -122,3 +122,8 @@ ul.list-unstyled > li {
 .log {
 	margin-top: 30px;
 }
+
+li .place-image {
+	height: 200px;
+	background-color: gray;
+}

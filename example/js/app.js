@@ -19,6 +19,7 @@
 
 		newItem.find(".content").html(item.data('name').toUpperCase());
 		newItem.insertBefore(item);
+		newItem.attr('data-name', item.data('name').toLowerCase());
 		item.remove();
 
 		saveConfig();
@@ -30,12 +31,14 @@
 
 	function makeDnd() {
 
-		
 		$('.toolbar-category-container').dragger({
 			draggable: 'li',
 			group: "lego",
-			ghostClass: 'placeholder',
+			placeholderClass: 'placeholder',
 			dragOnly: true,
+			specialPlaceholder: {
+				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>'
+			},
 			onStart: dragStart,
 			onEnd: dragEnd
 		});
@@ -43,8 +46,11 @@
 		$('.droppable').dragger({
 			handle: '.lego-move',
 			group: "lego",
-			ghostClass: 'placeholder',
+			placeholderClass: 'placeholder',
 			notAllow: '[data-name="generic.columns"]',
+			specialPlaceholder: {
+				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>'
+			},
 			onAdd: appendLego,
 			onUpdate: saveConfig,
 			onStart: dragStart,

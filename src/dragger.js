@@ -42,6 +42,7 @@
 			draggingClass: 'dragger-ing',
 			placeholderClass: 'placeholder',
 			notAllow: null,
+			specialPlaceholder: null,
 
 			onStart: $.noop,
 			onAdd: $.noop,
@@ -52,7 +53,7 @@
 
 		settings && $.extend(config, settings);
 
-		$placeholderEl = $('<li class="' + config.placeholderClass + '"></li>');
+		var placeholderHtml = '<li class="' + config.placeholderClass + '"></li>';
 
 		this.each(function() {
 
@@ -148,7 +149,17 @@
 			} else {
 				$draggingEl = $target;
 			}
-			
+
+			$placeholderEl = $(placeholderHtml);
+
+			if (config.specialPlaceholder) {
+				for (var sel in config.specialPlaceholder) {
+					if ($target.filter(sel).length) {
+						$placeholderEl = $(config.specialPlaceholder[sel]);
+					}
+				}
+			}
+
 			activeGroup = config.group;
 
 			if (isTouchable) {
@@ -192,7 +203,7 @@
 					// then we append the placeholder to the container
 					$(this).append($placeholderEl);
 				}
-				// if drag over target exists and it's not draggingEl itself
+				// if drag over target exists and it's not placeholder itself
 				// and also if the group name exists
 				else if ($target.length && $target[0] !== $placeholderEl[0] && $target.parent().data(expando)) {
 					if (!$lastEl || $lastEl[0] !== $target[0]) {
