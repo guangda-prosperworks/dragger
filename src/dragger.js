@@ -42,6 +42,7 @@
 			draggingClass: 'dragger-ing',
 			placeholderClass: 'placeholder',
 			notAllow: null,
+			defaultPlaceholder: null,
 			specialPlaceholder: null,
 
 			onStart: $.noop,
@@ -53,7 +54,7 @@
 
 		settings && $.extend(config, settings);
 
-		var placeholderHtml = '<li class="' + config.placeholderClass + '"></li>';
+		var placeholderHtml = config.defaultPlaceholder || '<li class="' + config.placeholderClass + '"></li>';
 
 		this.each(function() {
 
@@ -216,7 +217,7 @@
 					}
 
 					var
-					rect = lastRect,
+						rect = lastRect,
 						width = rect.right - rect.left,
 						height = rect.bottom - rect.top,
 						floating = /left|right|inline/.test(lastCSS.cssFloat + lastCSS.display),
