@@ -22,8 +22,13 @@
 		// is in silent
 		isInSilent = false,
 		// silent interval
-		silentInterval = 30,
-		expando = 'Dragger' + (new Date).getTime();
+		shortSilentInterval = 0,
+		defaultSilentInterval = 30,
+		middleSilentInterval = 300,
+		longSilentInterval = 1000,
+		groupAttrName = 'dragger-group',
+		innerClassName = 'inner',
+		dragCriticalValue = 5;
 
 	$.fn.dragger = function(settings) {
 
@@ -79,7 +84,7 @@
 				.on(startDraggingEvent + '.dragger', $.proxy(initDragger, this))
 				.on("dragover.dragger dragenter.dragger", $.proxy(onDragOver, this))
 
-				.data(expando, config.group);
+				.attr(groupAttrName, config.group);
 		});
 
 		function initDragger(evt) {
@@ -182,10 +187,11 @@
 		}
 
 		function onDragOver(evt) {
+			// in case we have multiple level drag over
+			// we need to stop propagation
+			evt.stopPropagation();
+
 			if (!isInSilent && !config.dragOnly && (activeGroup === config.group)) {
-				// in case we have multiple level drag over
-				// we need to stop propagation
-				evt.stopPropagation();
 
 				// if we have notAllow set
 				if (config.notAllow) {
@@ -195,7 +201,8 @@
 					}
 				}
 
-				var $target = $(evt.target).closest(config.draggable, this);
+				var $target = $(evt.target).closest(config.draggable, this),
+					domOperated = false;
 
 				if ( // if the container don't have children
 					!$(this).children().length ||
@@ -203,10 +210,55 @@
 					(this === evt.target && draggingAtBottom(this, evt.originalEvent))) {
 					// then we append the placeholder to the container
 					$(this).append($placeholderEl);
+					domOperated = true;
+				}
+				// if drag over "this" and its before "this"
+				else if ($(this).children().length &&
+					evt.target === this && draggingAtTop(this, evt.originalEvent)) {
+					// the prepend the placeholder
+					$(this).prepend($placeholderEl);
+					domOperated = true;
 				}
 				// if drag over target exists and it's not placeholder itself
 				// and also if the group name exists
-				else if ($target.length && $target[0] !== $placeholderEl[0] && $target.parent().data(expando)) {
+				else if ($target.length && $target[0] !== $placeholderEl[0] && $target.parent().attr(groupAttrName)) {
+
+					var inDeeperLevel = false,
+						forceAfter = null,
+						useShortInterval = false;
+
+					// judge whether use short interval
+					if ($(this).hasClass(innerClassName)) {
+						var outterDraggable = $(this).closest(config.draggable);
+						// if the outterdraggable is the first child
+						if (outterDraggable.length &&
+							outterDraggable.parent().children()[0] === outterDraggable[0]) {
+							useShortInterval = true;
+						}
+					}
+
+					if ($target.find('['+groupAttrName+']').length) {
+						var targetRect = $target[0].getBoundingClientRect(),
+							evtClientY = evt.originalEvent.clientY;
+
+						if ($target.parent().children()[0] === $target[0]) {
+							if (evtClientY < targetRect.top + targetRect.height
+								&& targetRect.top + targetRect.height - evtClientY < 20) {
+								inDeeperLevel = true;
+							}
+						} else if ($target.parent().children().last()[0] === $target[0]) {
+							if (evtClientY === targetRect.top) {
+								inDeeperLevel = true;
+							}
+							forceAfter = true;
+
+						} else {
+							inDeeperLevel = true;
+						}
+					}
+
+					if (inDeeperLevel) return;
+
 					if (!$lastEl || $lastEl[0] !== $target[0]) {
 						$lastEl = $target;
 						lastCSS = {
@@ -221,20 +273,19 @@
 						width = rect.right - rect.left,
 						height = rect.bottom - rect.top,
 						floating = /left|right|inline/.test(lastCSS.cssFloat + lastCSS.display),
-						skew = (floating ? (evt.originalEvent.clientX - rect.left) / width : (evt.originalEvent.clientY - rect.top) / height) > .5,
+						skew = floating ? (evt.originalEvent.clientX - rect.left) / width : (evt.originalEvent.clientY - rect.top) / height,
 						isWide = ($target.width() > $placeholderEl.width()),
 						isLong = ($target.height() > $placeholderEl.height()),
 						$nextSibling = $target.next(),
 						after;
 
-					isInSilent = true;
-					setTimeout(unSilent, silentInterval);
-
 					if (floating) {
-						after = ($target.previous()[0] === $placeholderEl[0]) && !isWide || (skew > .5) && isWide
+						after = ($target.prev()[0] === $placeholderEl[0]) && !isWide || skew > .5 && isWide
 					} else {
-						after = ($target.next()[0] !== $placeholderEl[0]) && !isLong || (skew > .5) && isLong;
+						after = ($target.next()[0] !== $placeholderEl[0]) && !isLong || skew > .5 && isLong;
 					}
+
+					if (forceAfter !== null) after = forceAfter;
 
 					if (after && !$nextSibling.length) {
 						$(this).append($placeholderEl);
@@ -242,6 +293,28 @@
 						var $before = after ? $nextSibling : $target;
 						$before.before($placeholderEl);
 					}
+					domOperated = true;
+				}
+
+				if (domOperated) {
+					isInSilent = true;
+					var interval = useShortInterval ? shortSilentInterval : defaultSilentInterval;
+
+					// when drag something from outter to inner
+					if (evt.target &&
+						$(this).hasClass(innerClassName) && evt.target === this) {
+						interval = longSilentInterval;
+					}
+
+					// TODO 
+					// when drag something from inner to outer
+					if ($draggingEl && $draggingEl.length &&
+						$draggingEl.parent().hasClass(innerClassName) &&
+						!$(this).hasClass(innerClassName)) {
+						interval = middleSilentInterval;
+					}
+
+					setTimeout(unSilent, interval);
 				}
 
 				$draggingEl.hide();
@@ -325,9 +398,14 @@
 			onDrop.call(el);
 		}
 
+		function draggingAtTop(el, evt) {
+			var first = el.getBoundingClientRect();
+			return evt.clientY - first.top < dragCriticalValue;
+		}
+
 		function draggingAtBottom(el, evt) {
 			var last = el.lastElementChild.getBoundingClientRect();
-			return evt.clientY - (last.top + last.height) > 5; // min delta
+			return evt.clientY - (last.top + last.height) > dragCriticalValue;
 		}
 
 		function unSilent() {
