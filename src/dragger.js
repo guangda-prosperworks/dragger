@@ -306,7 +306,6 @@
 						interval = longSilentInterval;
 					}
 
-					// TODO 
 					// when drag something from inner to outer
 					if ($draggingEl && $draggingEl.length &&
 						$draggingEl.parent().hasClass(innerClassName) &&
