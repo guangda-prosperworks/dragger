@@ -127,3 +127,8 @@ li .place-image {
 	height: 200px;
 	background-color: gray;
 }
+
+.frame {
+	width: 100%;
+	height: 100%;
+}

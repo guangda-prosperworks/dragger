@@ -2,9 +2,17 @@
 
 	'use strict';
 
-	var isNew = true;
+	var isNew = true,
+		legoHtml = '<li><span class="lego-move"></span><div class="content"></div></li>',
+		frameWin = $(".frame"),
+		frameDoc = getDoc(frameWin[0]);
 
-	var legoHtml = '<li><span class="lego-move"></span><div class="content"></div></li>'
+	function getDoc(x) {
+		if (!x) return null;
+		return x.document ||
+			x.contentDocument ||
+			x.contentWindow.document;
+	}
 
 	function dragStart() {
 		$('.droppable').addClass("highlight");
@@ -43,7 +51,9 @@
 			onEnd: dragEnd
 		});
 
-		$('.droppable').dragger({
+		var doc = frameWin.length ? frameDoc : document;
+
+		$(doc).find('.droppable').dragger({
 			handle: '.lego-move',
 			group: "lego",
 			placeholderClass: 'placeholder',
@@ -58,7 +68,11 @@
 		});
 	}
 
-	makeDnd();
+	if (frameWin.length) {
+		frameWin.on("load", makeDnd);
+	} else {
+		makeDnd();
+	}
 
 })();
 
