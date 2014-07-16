@@ -2,8 +2,7 @@
 
 	'use strict';
 
-	var isNew = true,
-		legoHtml = '<li><span class="lego-move"></span><div class="content"></div></li>',
+	var legoHtml = '<li><span class="lego-move"></span><div class="content"></div></li>',
 		frameWin = $(".frame"),
 		frameDoc = getDoc(frameWin[0]);
 
@@ -51,7 +50,7 @@
 			onEnd: dragEnd
 		});
 
-		var doc = frameWin.length ? frameDoc : document;
+		var doc = frameWin.length ? frameDoc : 'body';
 
 		$(doc).find('.droppable').dragger({
 			handle: '.lego-move',

@@ -13,6 +13,7 @@
 		startDraggingEvent = isIEDragDrop ? "selectstart" :
 			(isTouchable ? "touchstart" : "mousedown"),
 		$draggingEl,
+		$ghostEl,
 		$placeholderEl,
 		$lastEl,
 		$nextEl,
@@ -26,9 +27,13 @@
 		defaultSilentInterval = 30,
 		middleSilentInterval = 300,
 		longSilentInterval = 1000,
-		groupAttrName = 'dragger-group',
+		groupAttrName = 'dragger-group-' + (+new Date),
 		innerClassName = 'inner',
-		dragCriticalValue = 5;
+		dragCriticalValue = 5,
+		touchDetectInterval = 150,
+		touchIntervalFunc,
+		touchEvt,
+		touchStartXY;
 
 	$.fn.dragger = function(settings) {
 
@@ -85,6 +90,10 @@
 				.on("dragover.dragger dragenter.dragger", $.proxy(onDragOver, this))
 
 				.attr(groupAttrName, config.group);
+
+			if (isTouchable) {
+				$(this).on("touchdragover.dragger", $.proxy(onDragOver, this));
+			}
 		});
 
 		function initDragger(evt) {
@@ -118,7 +127,13 @@
 				changeDraggableStatus($dragEl.find("a,img"), false);
 
 				if (isTouchable) {
-					// TODO
+					touchStartXY = {
+						x: evt.originalEvent.touches[0].clientX,
+						y: evt.originalEvent.touches[0].clientY
+					};
+					evt.target = $dragEl[0];
+					$.proxy(onDragStart, this)(evt);
+					evt.preventDefault();
 				}
 
 				// bind drag events
@@ -169,8 +184,31 @@
 			activeGroup = config.group;
 
 			if (isTouchable) {
-				// TODO
-				// 
+				var rect = $target[0].getBoundingClientRect(),
+					targetMargin = {
+						top: parseInt($target.css("marginTop")),
+						left: parseInt($target.css("marginLeft"))
+					},
+					ghostRect;
+
+				$ghostEl = $target.clone();
+
+				copyCss($target, $ghostEl);
+
+				$ghostEl
+					.css("top", rect.top - targetMargin.top)
+					.css("left", rect.left - targetMargin.left)
+					.css("opacity", 0.8)
+					.css("position", "fixed")
+					.css("zIndex", 100000);
+
+				$('body').append($ghostEl);
+
+				$(document).on("touchmove.dragger", $.proxy(onTouchMove, this));
+				$(document).on("touchend.dragger", $.proxy(onDrop, this));
+				$(document).on("touchcancel.dragger", $.proxy(onDrop, this));
+
+				touchIntervalFunc = setInterval(detectTouchDragOver, touchDetectInterval);
 
 			} else {
 				dataTransfer.effectAllowed = 'move';
@@ -184,6 +222,44 @@
 
 			// toggle effects for dragging element
 			toggleEffects();
+		}
+
+		function onTouchMove(evt) {
+			if (!touchStartXY) return;
+
+			touchEvt = evt.originalEvent.touches[0];
+			var dx = touchEvt.clientX - touchStartXY.x,
+				dy = touchEvt.clientY - touchStartXY.y,
+				translateExpr = 'translate3d(' + dx + 'px,' + dy + 'px, 0)';
+
+			$ghostEl
+				.css("webkitTransform", translateExpr)
+				.css("mozTransform", translateExpr)
+				.css("msTransform", translateExpr)
+				.css("transform", translateExpr);
+
+			evt.preventDefault();
+		}
+
+		function detectTouchDragOver(evt) {
+			if (!touchEvt) return;
+
+			$ghostEl.hide();
+
+			var target = document.elementFromPoint(touchEvt.clientX, touchEvt.clientY),
+				$dragArea = $(target).closest('['+groupAttrName+']');
+
+			if ($dragArea.length) {
+				var touchDragOverEvent = jQuery.Event("touchdragover.dragger");
+				touchDragOverEvent.target = target;
+				touchDragOverEvent.originalEvent = {
+					clientX: touchEvt.clientX,
+					clientY: touchEvt.clientY
+				};
+				$dragArea.trigger(touchDragOverEvent);
+			}
+
+			$ghostEl.show();
 		}
 
 		function onDragOver(evt) {
@@ -332,16 +408,23 @@
 				.off('dropover.dragger')
 
 				.off('touchmove.dragger')
-				.off('touchend.dragger');
+				.off('touchend.dragger')
+				.off('touchcancel.dragger');
 
 			$(this)
 				.off('dragend.dragger')
 				.off('dragstart.dragger')
 				.off('selectstart.dragger');
 
+			clearInterval(touchIntervalFunc);
+
 			if (evt) {
 				evt.preventDefault();
 				evt.stopPropagation();
+
+				if ($ghostEl) {
+					$ghostEl.remove();
+				}
 
 				if ($placeholderEl) {
 					$placeholderEl.before($draggingEl);
@@ -367,10 +450,12 @@
 
 				// Set NULL
 				$draggingEl =
-				// $placeholderEl =
 				$nextEl =
 				$lastEl =
 				lastCSS =
+				touchIntervalFunc =
+				touchEvt =
+				touchStartXY =
 				activeGroup = null;
 			}
 		}
@@ -390,9 +475,6 @@
 				.off('dragenter.dragger');
 
 			changeDraggableStatus($(el), false);
-
-			// touch
-			// TODO
 			
 			onDrop.call(el);
 		}
@@ -423,6 +505,43 @@
 			} else {
 				$el.draggable = status;
 			}
+		}
+
+		function copyCss(source, target) {
+			var dom = $(source)[0],
+				style,
+				dest = {};
+
+			if (window.getComputedStyle) {
+				var camelize = function(a, b) {
+					return b.toUpperCase();
+				};
+				style = window.getComputedStyle(dom, null);
+				for (var i = 0, l = style.length; i < l; ++i) {
+					var prop = style[i];
+					var camel = prop.replace(/\-([a-z])/g, camelize);
+					var val = style.getPropertyValue(prop);
+					dest[camel] = val;
+				}
+				return target.css(dest);
+			}
+
+			if (style = dom.currentStyle) {
+				for (var prop in style) {
+					dest[prop] = style[prop];
+				}
+				return target.css(dest);
+			}
+
+			if (style = dom.style) {
+				for (var prop in style) {
+					if (typeof style[prop] != 'function') {
+						dest[prop] = style[prop];
+					}
+				}
+			}
+
+			return target.css(dest);
 		}
 	};
 
