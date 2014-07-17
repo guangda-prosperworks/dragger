@@ -15,6 +15,11 @@
 		$draggingEl,
 		$ghostEl,
 		$placeholderEl,
+		$specialPlaceholderEl,
+		spTimeout,
+		placeholderChanged,
+		$lastPlaceholderParent,
+		lastPlaceholderIndex,
 		$lastEl,
 		$nextEl,
 		lastCSS,
@@ -27,6 +32,7 @@
 		defaultSilentInterval = 30,
 		middleSilentInterval = 300,
 		longSilentInterval = 1000,
+		pcTimeoutFunc,
 		groupAttrName = 'dragger-group-' + (+new Date),
 		innerClassName = 'inner',
 		dragCriticalValue = 5,
@@ -54,6 +60,7 @@
 			notAllow: null,
 			defaultPlaceholder: null,
 			specialPlaceholder: null,
+			placeholderChangeTimeout: null,
 
 			onStart: $.noop,
 			onAdd: $.noop,
@@ -176,8 +183,25 @@
 			if (config.specialPlaceholder) {
 				for (var sel in config.specialPlaceholder) {
 					if ($target.filter(sel).length) {
-						$placeholderEl = $(config.specialPlaceholder[sel]);
+						$specialPlaceholderEl = $(config.specialPlaceholder[sel])
+							.css("height", 1)
+							.css("webkitTransition", "height ease 0.5s")
+							.css("mozTransition", "height ease 0.5s")
+							.css("oTransition", "height ease 0.5s")
+							.css("transition", "height ease 0.5s");
 					}
+				}
+
+				if (config.placeholderChangeTimeout) {
+					for (var sel in config.placeholderChangeTimeout) {
+						if ($target.filter(sel).length) {
+							spTimeout = config.placeholderChangeTimeout[sel];
+						}
+					}
+				}
+
+				if (spTimeout === 0 && $specialPlaceholderEl) {
+					$placeholderEl = $specialPlaceholderEl;
 				}
 			}
 
@@ -372,7 +396,24 @@
 					domOperated = true;
 				}
 
+
 				if (domOperated) {
+
+					var domChanged = false,
+						$currentPlaceholderParent = $placeholderEl.parent(),
+						currentPlaceholderIndex = findIndex($currentPlaceholderParent, $placeholderEl);
+
+					if ($lastPlaceholderParent && lastPlaceholderIndex &&
+						$currentPlaceholderParent[0] === $lastPlaceholderParent[0] &&
+						currentPlaceholderIndex === lastPlaceholderIndex) {
+						domChanged = false;
+					} else {
+						domChanged = true;
+					}
+
+					$lastPlaceholderParent = $currentPlaceholderParent;
+					lastPlaceholderIndex = currentPlaceholderIndex;
+
 					isInSilent = true;
 					var interval = useShortInterval ? shortSilentInterval : defaultSilentInterval;
 
@@ -387,6 +428,29 @@
 						$draggingEl.parent().hasClass(innerClassName) &&
 						!$(this).hasClass(innerClassName)) {
 						interval = middleSilentInterval;
+					}
+
+					if (domChanged && spTimeout) {
+						if (placeholderChanged) {
+							var newPlaceholder = $(placeholderHtml);
+							$placeholderEl.before(newPlaceholder);
+							$placeholderEl.remove();
+							$placeholderEl = newPlaceholder;
+							$specialPlaceholderEl && $specialPlaceholderEl.css("height", 1);
+							placeholderChanged = null;
+							interval = middleSilentInterval;
+						}
+
+						pcTimeoutFunc && clearTimeout(pcTimeoutFunc);
+						pcTimeoutFunc = setTimeout(function() {
+							$placeholderEl.before($specialPlaceholderEl);
+							$placeholderEl.remove();
+							$placeholderEl = $specialPlaceholderEl;
+							setTimeout(function() {
+								$placeholderEl && $placeholderEl.css("height", "");
+							}, 50);
+							placeholderChanged = true;
+						}, spTimeout);
 					}
 
 					setTimeout(unSilent, interval);
@@ -450,6 +514,11 @@
 
 				// Set NULL
 				$draggingEl =
+				$specialPlaceholderEl =
+				spTimeout =
+				placeholderChanged =
+				$lastPlaceholderParent =
+				lastPlaceholderIndex =
 				$nextEl =
 				$lastEl =
 				lastCSS =
@@ -542,6 +611,15 @@
 			}
 
 			return target.css(dest);
+		}
+
+		function findIndex(parent, child) {
+			var ret;
+			parent.children().each(function(index) {
+				if (this === child[0])
+					ret = index;
+			});
+			return ret;
 		}
 	};
 

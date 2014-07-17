@@ -44,7 +44,12 @@
 			placeholderClass: 'placeholder',
 			dragOnly: true,
 			specialPlaceholder: {
-				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>'
+				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>',
+				'[data-name="generic.image-gallery"]': '<li><div class="place-image"></div></li>'
+			},
+			placeholderChangeTimeout: {
+				'[data-name="generic.image"]': 2000,
+				'[data-name="generic.image-gallery"]': 0
 			},
 			onStart: dragStart,
 			onEnd: dragEnd
@@ -58,7 +63,12 @@
 			placeholderClass: 'placeholder',
 			notAllow: '[data-name="generic.columns"]',
 			specialPlaceholder: {
-				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>'
+				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>',
+				'[data-name="generic.image-gallery"]': '<li><div class="place-image"></div></li>'
+			},
+			placeholderChangeTimeout: {
+				'[data-name="generic.image"]': 2000,
+				'[data-name="generic.image-gallery"]': 0
 			},
 			onAdd: appendLego,
 			onUpdate: saveConfig,
