@@ -350,7 +350,6 @@
 							if (evtClientY === targetRect.top) {
 								inDeeperLevel = true;
 							}
-							forceAfter = true;
 
 						} else {
 							inDeeperLevel = true;
@@ -384,8 +383,6 @@
 					} else {
 						after = ($target.next()[0] !== $placeholderEl[0]) && !isLong || skew > .5 && isLong;
 					}
-
-					if (forceAfter !== null) after = forceAfter;
 
 					if (after && !$nextSibling.length) {
 						$(this).append($placeholderEl);
