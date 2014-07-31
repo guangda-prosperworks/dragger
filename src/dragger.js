@@ -86,11 +86,11 @@
 
 			$(this)
 				// bind all customized events
-				.on('Start.dragger', config.onStart)
-				.on('Add.dragger', config.onAdd)
-				.on('Update.dragger', config.onUpdate)
-				.on('Remove.dragger', config.onRemove)
-				.on('End.dragger', config.onEnd)
+				.on('start.dragger', config.onStart)
+				.on('add.dragger', config.onAdd)
+				.on('update.dragger', config.onUpdate)
+				.on('remove.dragger', config.onRemove)
+				.on('end.dragger', config.onEnd)
 
 				// bind browser events
 				.on(startDraggingEvent + '.dragger', $.proxy(initDragger, this))
@@ -106,6 +106,7 @@
 		function initDragger(evt) {
 			var $target = $(evt.target),
 				$dragEl;
+			evt.stopPropagation();
 
 			// if it has handle element, that means only when user click the handle element
 			// will trigger the dragging
@@ -144,8 +145,9 @@
 				}
 
 				// bind drag events
-				$(this).on('dragstart.dragger', $.proxy(onDragStart, this));
-				$(this).on('dragend.dragger', $.proxy(onDrop, this));
+				$(this)
+					.on('dragstart.dragger', $.proxy(onDragStart, this))
+					.on('dragend.dragger', $.proxy(onDrop, this));
 				$(document).on('dragover.dragger', onGlobalDragOver);
 
 				// in case select something, just remove selections
@@ -173,7 +175,7 @@
 
 			if (config.dragOnly) {
 				$draggingEl = $target.clone();
-				$draggingEl.on('End.dragger', config.onEnd);
+				$draggingEl.on('end.dragger', config.onEnd);
 			} else {
 				$draggingEl = $target;
 			}
@@ -185,9 +187,6 @@
 					if ($target.filter(sel).length) {
 						$specialPlaceholderEl = $(config.specialPlaceholder[sel])
 							.css("height", 1)
-							.css("webkitTransition", "height ease 0.5s")
-							.css("mozTransition", "height ease 0.5s")
-							.css("oTransition", "height ease 0.5s")
 							.css("transition", "height ease 0.5s");
 					}
 				}
@@ -228,9 +227,10 @@
 
 				$('body').append($ghostEl);
 
-				$(document).on("touchmove.dragger", $.proxy(onTouchMove, this));
-				$(document).on("touchend.dragger", $.proxy(onDrop, this));
-				$(document).on("touchcancel.dragger", $.proxy(onDrop, this));
+				$(document)
+					.on("touchmove.dragger", $.proxy(onTouchMove, this))
+					.on("touchend.dragger", $.proxy(onDrop, this))
+					.on("touchcancel.dragger", $.proxy(onDrop, this));
 
 				touchIntervalFunc = setInterval(detectTouchDragOver, touchDetectInterval);
 
@@ -242,7 +242,7 @@
 			}
 
 			// trigger the customized start event
-			$target.trigger('Start.dragger', [$target]);
+			$target.trigger('start.dragger', [$target]);
 
 			// toggle effects for dragging element
 			toggleEffects();
@@ -256,11 +256,7 @@
 				dy = touchEvt.clientY - touchStartXY.y,
 				translateExpr = 'translate3d(' + dx + 'px,' + dy + 'px, 0)';
 
-			$ghostEl
-				.css("webkitTransform", translateExpr)
-				.css("mozTransform", translateExpr)
-				.css("msTransform", translateExpr)
-				.css("transform", translateExpr);
+			$ghostEl.css("transform", translateExpr);
 
 			evt.preventDefault();
 		}
@@ -497,13 +493,13 @@
 						.show()
 						.toggleClass(config.draggingClass);
 
-					$draggingEl.trigger('End.dragger', [$draggingEl]);
+					$draggingEl.trigger('end.dragger', [$draggingEl]);
 
 					if (!$.contains(this, $draggingEl[0])) {
-						$(this).trigger('Remove.dragger', [$draggingEl]);
-						$draggingEl.trigger('Add.dragger', [$draggingEl]);
+						$(this).trigger('remove.dragger', [$draggingEl]);
+						$draggingEl.trigger('add.dragger', [$draggingEl]);
 					} else if ($draggingEl.next()[0] !== $nextEl[0]) {
-						$draggingEl.trigger('Update.dragger', [$draggingEl])
+						$draggingEl.trigger('update.dragger', [$draggingEl])
 					}
 
 					$draggingEl[0].draggable = "";
@@ -529,11 +525,11 @@
 		function destroy(el) {
 
 			$(el)
-				.off('Start.dragger')
-				.off('Add.dragger')
-				.off('Update.dragger')
-				.off('Remove.dragger')
-				.off('End.dragger')
+				.off('start.dragger')
+				.off('add.dragger')
+				.off('update.dragger')
+				.off('remove.dragger')
+				.off('end.dragger')
 
 				.off(startDraggingEvent + '.dragger')
 
