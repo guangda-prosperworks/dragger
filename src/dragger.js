@@ -86,11 +86,11 @@
 
 			$(this)
 				// bind all customized events
-				.on('start.dragger', config.onStart)
-				.on('add.dragger', config.onAdd)
-				.on('update.dragger', config.onUpdate)
-				.on('remove.dragger', config.onRemove)
-				.on('end.dragger', config.onEnd)
+				.on('Start.dragger', config.onStart)
+				.on('Add.dragger', config.onAdd)
+				.on('Update.dragger', config.onUpdate)
+				.on('Remove.dragger', config.onRemove)
+				.on('End.dragger', config.onEnd)
 
 				// bind browser events
 				.on(startDraggingEvent + '.dragger', $.proxy(initDragger, this))
@@ -106,7 +106,6 @@
 		function initDragger(evt) {
 			var $target = $(evt.target),
 				$dragEl;
-			evt.stopPropagation();
 
 			// if it has handle element, that means only when user click the handle element
 			// will trigger the dragging
@@ -126,6 +125,16 @@
 				if (dragElNodeName != 'a' && dragElNodeName != 'img')
 					$dragEl[0].dragDrop();
 			}
+
+			// ** NOTICE **
+			// when you click the handler, then the whole li can be dragged,
+			// this is to fix this issue, but i don't think it's a very good solution
+			// just make it work at first
+			var me = this;
+			$target.one('touchend mouseup', function(evt) {
+				onDrop.call(me);
+				changeDraggableStatus($dragEl, false);
+			});
 
 			// confirm the dragging element is the direct child of the outer container
 			if ($dragEl.parent()[0] === this) {
@@ -175,7 +184,7 @@
 
 			if (config.dragOnly) {
 				$draggingEl = $target.clone();
-				$draggingEl.on('end.dragger', config.onEnd);
+				$draggingEl.on('End.dragger', config.onEnd);
 			} else {
 				$draggingEl = $target;
 			}
@@ -242,7 +251,7 @@
 			}
 
 			// trigger the customized start event
-			$target.trigger('start.dragger', [$target]);
+			$target.trigger('Start.dragger', [$target]);
 
 			// toggle effects for dragging element
 			toggleEffects();
@@ -493,13 +502,13 @@
 						.show()
 						.toggleClass(config.draggingClass);
 
-					$draggingEl.trigger('end.dragger', [$draggingEl]);
+					$draggingEl.trigger('End.dragger', [$draggingEl]);
 
 					if (!$.contains(this, $draggingEl[0])) {
-						$(this).trigger('remove.dragger', [$draggingEl]);
-						$draggingEl.trigger('add.dragger', [$draggingEl]);
+						$(this).trigger('Remove.dragger', [$draggingEl]);
+						$draggingEl.trigger('Add.dragger', [$draggingEl]);
 					} else if ($draggingEl.next()[0] !== $nextEl[0]) {
-						$draggingEl.trigger('update.dragger', [$draggingEl])
+						$draggingEl.trigger('Update.dragger', [$draggingEl])
 					}
 
 					$draggingEl[0].draggable = "";
@@ -525,11 +534,11 @@
 		function destroy(el) {
 
 			$(el)
-				.off('start.dragger')
-				.off('add.dragger')
-				.off('update.dragger')
-				.off('remove.dragger')
-				.off('end.dragger')
+				.off('Start.dragger')
+				.off('Add.dragger')
+				.off('Update.dragger')
+				.off('Remove.dragger')
+				.off('End.dragger')
 
 				.off(startDraggingEvent + '.dragger')
 
