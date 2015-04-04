@@ -2,9 +2,29 @@
 
 	'use strict';
 
+	var a = 10;
+
 	var legoHtml = '<li><span class="lego-move"></span><div class="content"></div></li>',
 		frameWin = $(".frame"),
-		frameDoc = getDoc(frameWin[0]);
+		frameDoc = getDoc(frameWin[0]),
+		columnsHtml = 
+		['<li>',
+			'<div class="row">',
+				'<div class="col-sm-6">',
+					'<ul class="droppable list-unstyled inner"></ul>',
+				'</div>',
+				'<div class="col-sm-6">',
+					'<ul class="droppable list-unstyled inner"></ul>',
+				'</div>',
+			'</div>',
+		'</li>'].join(''),
+		groupHtml = 
+		['<li>',
+			'<div class="">',
+				'<ul class="droppable list-unstyled inner"></ul>',
+			'</div>',
+		'</li>'].join('');
+		
 
 	function getDoc(x) {
 		if (!x) return null;
@@ -22,14 +42,73 @@
 	}
 
 	function appendLego(evt, item) {
-		var newItem = $(legoHtml);
+		var legoName = item.data('name'),
+			newItem;
 
-		newItem.find(".content").html(item.data('name').toUpperCase());
+		switch(legoName) {
+			case 'generic.columns':
+				newItem = $(columnsHtml);
+			break;
+			case 'generic.group':
+				newItem = $(groupHtml);
+			break;
+			default:
+				newItem = $(legoHtml);
+			break;
+		}
+
+		newItem.find(".content").html(legoName.toUpperCase());
 		newItem.insertBefore(item);
-		newItem.attr('data-name', item.data('name').toLowerCase());
+		newItem.attr('data-name', legoName.toLowerCase());
+
 		item.remove();
 
 		saveConfig();
+
+		switch(legoName) {
+			case 'generic.columns':
+				newItem.find('.droppable').dragger({
+					handle: '.lego-move',
+					group: "lego",
+					placeholderClass: 'placeholder',
+					notAllow: '[data-name="generic.columns"]',
+					specialPlaceholder: {
+						'[data-name="generic.image"]': '<li><div class="place-image"></div></li>',
+						'[data-name="generic.image-gallery"]': '<li><div class="place-image"></div></li>'
+					},
+					placeholderChangeTimeout: {
+						'[data-name="generic.image"]': 2000,
+						'[data-name="generic.image-gallery"]': 0
+					},
+					onAdd: appendLego,
+					onUpdate: saveConfig,
+					onStart: dragStart,
+					onEnd: dragEnd
+				});
+			break;
+			case 'generic.group':
+				newItem.find('.droppable').dragger({
+					handle: '.lego-move',
+					group: "lego",
+					placeholderClass: 'placeholder',
+					notAllow: '[data-name="generic.group"]',
+					specialPlaceholder: {
+						'[data-name="generic.image"]': '<li><div class="place-image"></div></li>',
+						'[data-name="generic.image-gallery"]': '<li><div class="place-image"></div></li>'
+					},
+					placeholderChangeTimeout: {
+						'[data-name="generic.image"]': 2000,
+						'[data-name="generic.image-gallery"]': 0
+					},
+					onAdd: appendLego,
+					onUpdate: saveConfig,
+					onStart: dragStart,
+					onEnd: dragEnd
+				});
+			break;
+			default:
+			break;
+		}
 	}
 
 	function saveConfig() {
@@ -61,7 +140,7 @@
 			handle: '.lego-move',
 			group: "lego",
 			placeholderClass: 'placeholder',
-			notAllow: '[data-name="generic.columns"]',
+			// notAllow: '[data-name="generic.columns"]',
 			specialPlaceholder: {
 				'[data-name="generic.image"]': '<li><div class="place-image"></div></li>',
 				'[data-name="generic.image-gallery"]': '<li><div class="place-image"></div></li>'

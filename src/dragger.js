@@ -25,6 +25,7 @@
 		lastCSS,
 		lastRect,
 		activeGroup,
+		isPlaceholderInserted,
 		// is in silent
 		isInSilent = false,
 		// silent interval
@@ -250,6 +251,8 @@
 				$(document).on('drop.dragger', $.proxy(onDrop, this));
 			}
 
+			isPlaceholderInserted = false;
+
 			// trigger the customized start event
 			$target.trigger('Start.dragger', [$target]);
 
@@ -458,6 +461,8 @@
 					setTimeout(unSilent, interval);
 				}
 
+				isPlaceholderInserted = true;
+
 				$draggingEl.hide();
 			}
 		}
@@ -471,7 +476,7 @@
 
 			$(document)
 				.off('drop.dragger')
-				.off('dropover.dragger')
+				.off('dragover.dragger')
 
 				.off('touchmove.dragger')
 				.off('touchend.dragger')
@@ -492,7 +497,7 @@
 					$ghostEl.remove();
 				}
 
-				if ($placeholderEl) {
+				if ($placeholderEl && isPlaceholderInserted) {
 					$placeholderEl.before($draggingEl);
 					$placeholderEl.remove();
 				}
@@ -623,6 +628,8 @@
 			});
 			return ret;
 		}
+
+		return this;
 	};
 
 })(jQuery);
