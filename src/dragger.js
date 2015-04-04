@@ -8,6 +8,13 @@
 
 	'use strict';
 
+	/**
+	 * Known bug:
+	 *
+	 * 1. If two columns are adjacent,
+	 *    it's really hard to drag an element to the middle of them
+	 */
+
 	var isTouchable = 'ontouchstart' in window || navigator.msMaxTouchPoints,
 		isIEDragDrop = !! document.createElement('div').dragDrop,
 		startDraggingEvent = isIEDragDrop ? "selectstart" :
@@ -40,7 +47,8 @@
 		touchDetectInterval = 150,
 		touchIntervalFunc,
 		touchEvt,
-		touchStartXY;
+		touchStartXY,
+		groupMainDropArea = {};
 
 	$.fn.dragger = function(settings) {
 
@@ -62,6 +70,7 @@
 			defaultPlaceholder: null,
 			specialPlaceholder: null,
 			placeholderChangeTimeout: null,
+			isGroupMainDropArea: false,
 
 			onStart: $.noop,
 			onAdd: $.noop,
@@ -71,6 +80,10 @@
 		};
 
 		settings && $.extend(config, settings);
+
+		if (config.isGroupMainDropArea) {
+			groupMainDropArea[config.group] = this;
+		}
 
 		var placeholderHtml = config.defaultPlaceholder || '<li class="' + config.placeholderClass + '"></li>';
 
@@ -158,7 +171,7 @@
 				$(this)
 					.on('dragstart.dragger', $.proxy(onDragStart, this))
 					.on('dragend.dragger', $.proxy(onDrop, this));
-				$(document).on('dragover.dragger', onGlobalDragOver);
+				$(document).on('dragover.dragger', $.proxy(onGlobalDragOver, this));
 
 				// in case select something, just remove selections
 				// if there's a handler and user select some text
@@ -294,13 +307,12 @@
 			$ghostEl.show();
 		}
 
-		function onDragOver(evt) {
+		function onDragOver(evt, forceNotDragOnly) {
 			// in case we have multiple level drag over
 			// we need to stop propagation
 			evt.stopPropagation();
 
-			if (!isInSilent && !config.dragOnly && (activeGroup === config.group)) {
-
+			if (!isInSilent && (!config.dragOnly || forceNotDragOnly) && (activeGroup === config.group)) {
 				// if we have notAllow set
 				if (config.notAllow) {
 					if ($draggingEl) {
@@ -401,7 +413,6 @@
 					domOperated = true;
 				}
 
-
 				if (domOperated) {
 
 					var domChanged = false,
@@ -459,17 +470,21 @@
 					}
 
 					setTimeout(unSilent, interval);
+
+					$draggingEl.hide();
+					isPlaceholderInserted = true;
 				}
-
-				isPlaceholderInserted = true;
-
-				$draggingEl.hide();
 			}
 		}
 
 		function onGlobalDragOver(evt) {
-			evt.originalEvent.dataTransfer.dropEffect = 'move';
 			evt.preventDefault();
+
+			if (groupMainDropArea[config.group] && groupMainDropArea[config.group].length) {
+				var target = groupMainDropArea[config.group][0];
+				evt.target = target;
+				onDragOver.call(target, evt, true);
+			}
 		}
 
 		function onDrop(evt) {
