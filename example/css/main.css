@@ -78,12 +78,13 @@ ul.list-unstyled > li {
 }
 
 .droppable>li.placeholder {
-	height: 50px;
+	height: 5px;
+	min-height: 5px;
 	width: 100%;
 	float: none;
 	margin: 0;
-	border: 1px dashed #000;
-	background: #5191ff;
+	border: 1px solid #000;
+	background: #000;
 }
 
 .dragging {

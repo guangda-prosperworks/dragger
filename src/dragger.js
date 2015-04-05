@@ -11,8 +11,18 @@
 	/**
 	 * Known bug:
 	 *
-	 * 1. If two columns are adjacent,
+	 * 1. Fixed: If two columns are adjacent,
 	 *    it's really hard to drag an element to the middle of them
+	 * 2. Since we remove the different intervals, now if the placeholder is 
+	 * 		very big, it might be buggy, but in Compose project
+	 * 		the placeholder is very small, which won't trigger
+	 * 		this bug
+	 */
+
+	/**
+	 * Note:
+	 *
+	 * 1. Remove the inDeeperLevel detect, we reply on isGroupMainDropArea now
 	 */
 
 	var isTouchable = 'ontouchstart' in window || navigator.msMaxTouchPoints,
@@ -36,10 +46,7 @@
 		// is in silent
 		isInSilent = false,
 		// silent interval
-		shortSilentInterval = 0,
-		defaultSilentInterval = 30,
-		middleSilentInterval = 300,
-		longSilentInterval = 1000,
+		silentInterval = 30,
 		pcTimeoutFunc,
 		groupAttrName = 'dragger-group-' + (+new Date),
 		innerClassName = 'inner',
@@ -325,7 +332,7 @@
 					domOperated = false;
 
 				if ( // if the container don't have children
-					!$(this).children().length ||
+					!hasVisibleChildren(this) ||
 					// if the target is container itself, and it's dragged to the bottom of the container
 					(this === evt.target && draggingAtBottom(this, evt.originalEvent))) {
 					// then we append the placeholder to the container
@@ -333,51 +340,14 @@
 					domOperated = true;
 				}
 				// if drag over "this" and its before "this"
-				else if ($(this).children().length &&
+				else if (hasVisibleChildren(this) &&
 					evt.target === this && draggingAtTop(this, evt.originalEvent)) {
-					// the prepend the placeholder
 					$(this).prepend($placeholderEl);
 					domOperated = true;
 				}
 				// if drag over target exists and it's not placeholder itself
 				// and also if the group name exists
 				else if ($target.length && $target[0] !== $placeholderEl[0] && $target.parent().attr(groupAttrName)) {
-
-					var inDeeperLevel = false,
-						forceAfter = null,
-						useShortInterval = false;
-
-					// judge whether use short interval
-					if ($(this).hasClass(innerClassName)) {
-						var outterDraggable = $(this).closest(config.draggable);
-						// if the outterdraggable is the first child
-						if (outterDraggable.length &&
-							outterDraggable.parent().children()[0] === outterDraggable[0]) {
-							useShortInterval = true;
-						}
-					}
-
-					if ($target.find('['+groupAttrName+']').length) {
-						var targetRect = $target[0].getBoundingClientRect(),
-							evtClientY = evt.originalEvent.clientY;
-
-						if ($target.parent().children()[0] === $target[0]) {
-							if (evtClientY < targetRect.top + targetRect.height
-								&& targetRect.top + targetRect.height - evtClientY < 20) {
-								inDeeperLevel = true;
-							}
-						} else if ($target.parent().children().last()[0] === $target[0]) {
-							if (evtClientY === targetRect.top) {
-								inDeeperLevel = true;
-							}
-
-						} else {
-							inDeeperLevel = true;
-						}
-					}
-
-					if (inDeeperLevel) return;
-
 					if (!$lastEl || $lastEl[0] !== $target[0]) {
 						$lastEl = $target;
 						lastCSS = {
@@ -431,20 +401,6 @@
 					lastPlaceholderIndex = currentPlaceholderIndex;
 
 					isInSilent = true;
-					var interval = useShortInterval ? shortSilentInterval : defaultSilentInterval;
-
-					// when drag something from outter to inner
-					if (evt.target &&
-						$(this).hasClass(innerClassName) && evt.target === this) {
-						interval = longSilentInterval;
-					}
-
-					// when drag something from inner to outer
-					if ($draggingEl && $draggingEl.length &&
-						$draggingEl.parent().hasClass(innerClassName) &&
-						!$(this).hasClass(innerClassName)) {
-						interval = middleSilentInterval;
-					}
 
 					if (domChanged && spTimeout) {
 						if (placeholderChanged) {
@@ -454,7 +410,6 @@
 							$placeholderEl = newPlaceholder;
 							$specialPlaceholderEl && $specialPlaceholderEl.css("height", 1);
 							placeholderChanged = null;
-							interval = middleSilentInterval;
 						}
 
 						pcTimeoutFunc && clearTimeout(pcTimeoutFunc);
@@ -469,7 +424,7 @@
 						}, spTimeout);
 					}
 
-					setTimeout(unSilent, interval);
+					setTimeout(unSilent, silentInterval);
 
 					$draggingEl.hide();
 					isPlaceholderInserted = true;
@@ -576,7 +531,15 @@
 		}
 
 		function draggingAtBottom(el, evt) {
-			var last = el.lastElementChild.getBoundingClientRect();
+			var lastElement = el.lastElementChild;
+			if ($draggingEl && $draggingEl[0] === lastElement) {
+				lastElement = $(lastElement).prev()[0];
+			}
+			if (!lastElement) {
+				return false;
+			}
+
+			var last = lastElement.getBoundingClientRect();
 			return evt.clientY - (last.top + last.height) > dragCriticalValue;
 		}
 
@@ -596,6 +559,22 @@
 			} else {
 				$el.draggable = status;
 			}
+		}
+
+		function hasVisibleChildren(dom) {
+			dom = $(dom);
+			if (!dom.children().length) {
+				return false;
+			}
+
+			var visible = 0;
+			dom.children().each(function() {
+				if ($(this).is(":visible")) {
+					visible++;
+				}
+			});
+
+			return Boolean(visible);
 		}
 
 		function copyCss(source, target) {
